@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Presenter Dashboard</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f1f4f8;color:#182230;font-family:Arial,Helvetica,sans-serif}
+main{max-width:850px;margin:42px auto;padding:0 18px}.card{background:#fff;border:1px solid #e0e6ee;border-radius:13px;padding:25px}
+h1{font-size:23px;margin:0 0 8px}p{color:#667386;line-height:1.5;font-size:14px}
+label{display:block;font-size:13px;font-weight:700;margin:14px 0 6px}input{padding:12px;border:1px solid #cbd5e1;border-radius:7px;width:100%;font-size:15px}
+button{padding:11px 15px;border:0;border-radius:7px;background:#2858c7;color:#fff;font-weight:700;margin:14px 8px 0 0;cursor:pointer}
+.stats{display:flex;gap:12px;flex-wrap:wrap}.stat{flex:1;min-width:160px;background:#f7f9fc;border:1px solid #e6ebf1;border-radius:9px;padding:16px}.stat strong{display:block;font-size:26px;margin-top:5px}
+#dashboard{display:none}.notice{background:#eff6ff;border:1px solid #bfdbfe;padding:12px;border-radius:8px;color:#1e40af;font-size:13px}
+.event{padding:11px 0;border-bottom:1px solid #e8edf3;font-size:13px;color:#526174}
+.error{color:#b91c1c}.muted{color:#667386;font-size:12px}
+</style></head><body><main><section class="card">
+<h1>Presenter Dashboard</h1><p>Shared submission summary for the security-awareness exercise.</p>
+<div id="gate"><label for="pin">Presenter passcode</label><input id="pin" type="password" placeholder="Enter the passcode"><button id="unlock">Open dashboard</button><p id="error" class="error"></p></div>
+<div id="dashboard">
+<div class="notice">Privacy protection: the system records only a submission event and server timestamp. It does not collect usernames, passwords, or form contents.</div>
+<div class="stats" style="margin-top:18px">
+<div class="stat">Total demo submissions<strong id="count">0</strong></div>
+<div class="stat">Most recent submission<strong id="last" style="font-size:15px">—</strong></div>
+</div>
+<h2 style="font-size:17px;margin:24px 0 8px">Recent activity</h2><div id="events"></div>
+<button id="refresh">Refresh responses</button>
+<p class="muted" id="status" aria-live="polite"></p>
+</div></section>
+<p class="muted">Keep this dashboard URL and presenter passcode private. The passcode is checked by the server and is not embedded in this page.</p>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+let presenterPasscode='';
+async function loadEvents(){
+  $('status').textContent='Loading…';
+  try{
+    const response=await fetch('/.netlify/functions/events',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'list',passcode:presenterPasscode})
+    });
+    if(response.status===401) throw new Error('Incorrect passcode. Please unlock again.');
+    if(!response.ok) throw new Error('Could not load events. Check the Netlify function deployment and passcode setting.');
+    const data=await response.json();
+    const events=data.events||[];
+    $('count').textContent=events.length;
+    $('last').textContent=events.length?new Date(events[events.length-1].at).toLocaleString():'—';
+    $('events').innerHTML='';
+    events.slice().reverse().forEach(ev=>{
+      const div=document.createElement('div');div.className='event';
+      div.textContent='Demo form submitted · '+new Date(ev.at).toLocaleString();
+      $('events').appendChild(div);
+    });
+    if(!events.length)$('events').textContent='No submissions recorded yet.';
+    $('status').textContent='Updated just now.';
+  }catch(err){$('status').textContent=err.message;}
+}
+$('unlock').onclick=async()=>{
+  presenterPasscode=$('pin').value;
+  if(!presenterPasscode){$('error').textContent='Enter the presenter passcode.';return;}
+  $('gate').style.display='none';$('dashboard').style.display='block';
+  await loadEvents();
+};
+$('refresh').onclick=loadEvents;
+$('pin').addEventListener('keydown',e=>{if(e.key==='Enter')$('unlock').click();});
+</script></body></html>

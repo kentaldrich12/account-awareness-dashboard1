@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Account Security Awareness Exercise</title>
+<style>
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:#f1f4f8;font-family:Arial,Helvetica,sans-serif;color:#182230}
+header{height:64px;background:#fff;border-bottom:1px solid #e1e6ed;display:flex;align-items:center;padding:0 max(22px,calc((100% - 1040px)/2));gap:11px}
+.logo{height:32px;width:32px;border-radius:8px;background:#2858c7;color:white;display:grid;place-items:center;font-weight:800}
+main{max-width:430px;margin:58px auto;padding:0 18px}.panel{background:white;border:1px solid #e0e6ee;border-radius:14px;padding:30px;box-shadow:0 12px 34px #15243a0c}
+h1{font-size:25px;margin:0 0 9px}p{color:#667386;line-height:1.5;font-size:14px}.alert{background:#fff8ed;border:1px solid #f3d7ad;border-radius:8px;padding:13px 14px;margin:20px 0;color:#8b4d0b;font-size:13px;line-height:1.45}
+label{display:block;font-size:13px;font-weight:700;margin:16px 0 7px}input{width:100%;padding:13px;border:1px solid #cbd5e1;border-radius:7px;font-size:15px}button{width:100%;border:0;border-radius:7px;background:#2858c7;color:white;padding:13px;font-size:15px;font-weight:700;margin-top:20px;cursor:pointer}
+.result{display:none;margin-top:18px;background:#f0fdf4;border:1px solid #bbf7d0;padding:15px;border-radius:8px;color:#166534;font-size:14px;line-height:1.5}
+.disclosure{font-size:12px;color:#64748b;background:#f8fafc;border-radius:7px;padding:10px;margin-top:16px}
+.footer{text-align:center;color:#8792a2;font-size:11px;margin:20px}
+</style></head>
+<body>
+<header><div class="logo">A</div><strong>Account Security Awareness Exercise</strong></header>
+<main><section class="panel">
+<h1>Review your account status</h1>
+<p>This demonstration shows how account-warning messages can pressure people into submitting information.</p>
+<div class="alert"><strong>Example account notice</strong><br>A message may claim that an account is restricted and urge the recipient to act quickly. Pause and verify such notices through the service's official app or website.</div>
+<form id="form">
+<label for="user">Demo username (optional)</label><input id="user" autocomplete="off" placeholder="Use fictional test text only">
+<label for="pass">Demo password (optional)</label><input id="pass" type="password" autocomplete="new-password" placeholder="Do not enter a real password">
+<button type="submit">Submit demo response</button>
+</form>
+<div class="disclosure">Authorized security-awareness exercise. Do not enter real account details. The form values are never read, transmitted, or saved. Only the fact that the demo form was submitted and its timestamp are recorded.</div>
+<div class="result" id="result" role="status"></div>
+</section><div class="footer">Independent security-awareness exercise · Not affiliated with any account provider</div></main>
+<script>
+const form=document.getElementById('form');
+const result=document.getElementById('result');
+form.addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  // Do not read the username or password fields.
+  form.reset();
+  result.style.display='block';
+  result.textContent='Recording your demo response…';
+  try {
+    const response=await fetch('/.netlify/functions/events',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'record'})
+    });
+    if(!response.ok) throw new Error('The event could not be recorded.');
+    result.textContent='Your demo response has been recorded. No form values were collected.';
+  } catch(err) {
+    result.textContent='The response could not be recorded. Please tell the presenter.';
+  }
+});
+</script></body></html>
